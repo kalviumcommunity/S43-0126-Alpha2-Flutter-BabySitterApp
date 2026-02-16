@@ -1,16 +1,27 @@
-# flutter_application_1
+# SafeCare – Babysitter & Caregiver Discovery MVP
 
-A new Flutter project.
+A Flutter + Firebase MVP that makes childcare discovery **safer and more transparent** by giving parents a trusted place to see caregiver profiles, ratings, background verification, and real-time availability.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- **Parent flow**: Browse caregivers with ratings, “Background verified” badge, and **real-time “Available now”** status. Tap a profile to see full details; status updates live.
+- **Babysitter flow**: Create/edit profile (experience, skills, rate, availability), self-attest **background verified**, and toggle **“I’m available now”** so parents see updates in real time.
+- **Trust signals**: Rating display (ready for future reviews), verification badge, and live availability via Firestore listeners.
 
-A few resources to get you started if this is your first Flutter project:
+## Firebase
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- **Auth**: Email/password sign-up and login; role (parent / babysitter) stored in Firestore.
+- **Firestore**:  
+  - `users`: name, email, role.  
+  - `babysitters`: name, experience, skills, pricePerHour, availability, ratingAverage, ratingCount, backgroundVerified, isAvailableNow, updatedAt.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Ensure Firestore rules allow authenticated read/write for `users` and `babysitters` as needed for your app.
+
+## Run
+
+```bash
+flutter pub get
+flutter run
+```
+
+Use **Role selection** → sign up as Parent or Babysitter → log in. Parents see the discovery list; babysitters set up their profile and toggle availability.

@@ -44,14 +44,55 @@ class AuthService {
     }
   }
 
-  // GET USER ROLE
+  // GET USER ROLE (returns null if doc missing or role field missing)
   Future<String?> getUserRole() async {
-    String uid = _auth.currentUser!.uid;
+    final user = _auth.currentUser;
+    if (user == null) return null;
 
-    DocumentSnapshot doc =
-        await _firestore.collection("users").doc(uid).get();
-
-    return doc["role"];
+    try {
+      // Try server first
+      final doc = await _firestore
+          .collection("users")
+          .doc(user.uid)
+          .get(const GetOptions(source: Source.server));
+      
+      if (doc.exists && doc.data() != null) {
+        final role = doc.get("role");
+        return role is String ? role.trim().toLowerCase() : null;
+      }
+      // Document doesn't exist - return null (user needs to sign up)
+      return null;
+    } on FirebaseException catch (e) {
+      // If server fails with offline/unavailable, try cache
+      if (e.code == 'unavailable' || 
+          e.code == 'deadline-exceeded' ||
+          e.message?.toLowerCase().contains('offline') == true ||
+          e.message?.toLowerCase().contains('failed to get document') == true ||
+          e.message?.toLowerCase().contains('network') == true) {
+        try {
+          final cachedDoc = await _firestore
+              .collection("users")
+              .doc(user.uid)
+              .get(const GetOptions(source: Source.cache));
+          
+          if (cachedDoc.exists && cachedDoc.data() != null) {
+            final role = cachedDoc.get("role");
+            return role is String ? role.trim().toLowerCase() : null;
+          }
+          // Document doesn't exist in cache either - return null
+          return null;
+        } catch (_) {
+          // Cache read also failed - return null (don't throw)
+          return null;
+        }
+      }
+      // For permission errors or other Firebase errors, return null
+      // Let the UI handle it gracefully
+      return null;
+    } catch (_) {
+      // Any other error - return null instead of throwing
+      return null;
+    }
   }
 
   // LOGOUT

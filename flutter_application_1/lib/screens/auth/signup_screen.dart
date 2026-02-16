@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import 'login_screen.dart';
+import '../parent/parent_home_screen.dart';
+import '../babysitter/babysitter_dashboard.dart';
 
 class SignUpScreen extends StatefulWidget {
   final String role;
@@ -29,22 +30,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
       role: widget.role,
     );
 
-    setState(() => loading = false);
-
+    if (!mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Signup Failed: $error")));
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Signup Successful")));
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      setState(() => loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Signup Failed: $error")));
+      return;
     }
+
+    // Data is stored in Firebase; user is signed in. Go straight to home.
+    if (!mounted) return;
+    setState(() => loading = false);
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Welcome!")));
+    final isParent = widget.role.trim().toLowerCase() == "parent";
+    final route = isParent
+        ? MaterialPageRoute(builder: (_) => const ParentHomeScreen())
+        : MaterialPageRoute(builder: (_) => const BabysitterDashboard());
+    Navigator.of(context).pushAndRemoveUntil(route, (r) => false);
   }
 
   @override

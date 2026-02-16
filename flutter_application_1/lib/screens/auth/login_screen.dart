@@ -25,29 +25,39 @@ class _LoginScreenState extends State<LoginScreen> {
       password: _pass.text.trim(),
     );
 
+    if (!mounted) return;
     if (error != null) {
       setState(() => loading = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
-    String? role = await _authService.getUserRole();
+    // Get user role - this now returns null gracefully on errors
+    final role = await _authService.getUserRole();
 
+    if (!mounted) return;
     setState(() => loading = false);
 
-    if (role == "parent") {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const ParentHomeScreen()),
+    if (role == null || role.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            "Could not load your account data. This might be a network issue or your account may need to be set up.\n\nPlease try again or sign up if you haven't already.",
+          ),
+          duration: const Duration(seconds: 6),
+          action: SnackBarAction(
+            label: "Retry",
+            onPressed: () => login(),
+          ),
+        ),
       );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const BabysitterDashboard()),
-      );
+      return;
     }
+
+    final route = role == "parent"
+        ? MaterialPageRoute(builder: (_) => const ParentHomeScreen())
+        : MaterialPageRoute(builder: (_) => const BabysitterDashboard());
+    Navigator.of(context).pushAndRemoveUntil(route, (r) => false);
   }
 
   @override
